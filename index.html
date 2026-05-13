@@ -30,6 +30,12 @@
         --bg-card: #ffffff;
         }
 
+        header {
+            position: relative;
+            padding-top: 20px;
+            margin: 10px;
+        }
+
         /* モードごとに変数の値を定義 */
         body.dark {
             --bg-color: #2d2e34;
@@ -142,9 +148,19 @@
         }
     </style>
     <style>
+
+        @media (min-width: 1200px) {
+        .editor-main {
+            flex-grow: 1;        /* 残りの幅を自動で埋める */
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
         .main-content {
             text-align: center;
-            margin: 30px 20px;
         }
 
         .editor-container {
@@ -164,7 +180,9 @@
         section {
             margin: 20px 0;
         }
+    }
 
+        @media (min-width: 768px) {
         .editor-main {
             flex-grow: 1;        /* 残りの幅を自動で埋める */
             height: 100%;
@@ -173,6 +191,28 @@
             justify-content: center;
             position: relative;
             overflow: hidden;
+        }
+        .main-content {
+            text-align: center;
+            margin: 30px 20px;
+        }
+
+        .editor-container {
+            height: 100%;
+            margin: 0 auto;
+            max-width: 80%;
+        }
+
+        .controls {
+            width: 500px;
+            height: auto;
+            box-sizing: border-box;
+        }
+
+        section {
+            margin: 20px 0;
+        }
+
         }
 
         .year-input {
