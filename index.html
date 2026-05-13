@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="none">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="茶菓" content="茶菓">
+    <meta name="author" content="C茶菓">
+    <link rel="stylesheet" href="style-calendar.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Noto+Serif+JP:wght@300;500&family=Montserrat:wght@300;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <title>SECTOR：Tools</title>
+    <style>
+        :root {
+        /* 共通の色変数 */
+        --accent-blue: #617692;
+        --transition-speed: 0.5s;
+        --primary: #6b7280;
+        --primary-light: #6b7280;
+        --primary-dark: #586275;
+        --primary-bg: #efeef8;
+        --text-dark: #1f2937;
+        --text-light: #6b7280;
+        --bg-page: #f9fafb;
+        --bg-card: #ffffff;
+        }
+
+        /* モードごとに変数の値を定義 */
+        body.dark {
+            --bg-color: #2d2e34;
+            --text-color: #ffffff;
+        }
+        body.light {
+            --bg-color: #e0dfec;
+            --text-color: #373e59;
+        }
+
+        /* 実際に使うときは変数で指定 */
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color var(--transition-speed),color var(--transition-speed); /* 切り替えをスムーズにする */
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+        }
+
+        .mode-switch {
+            position: absolute;
+            top: 5%;
+            right: 10%;
+        }
+
+        .switch_label {
+            /*flexで横並びに。align-itemsで縦方向の中央揃えにする*/
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            width: 116px;
+        }
+
+        input[type="checkbox"] {
+            /*チェックボックスを左上端に固定してサイズを0にすることで非表示にできる*/
+            position: absolute;
+            width: 0;
+            height: 0;
+        }
+
+        .switch {
+            /*スイッチの位置。relativeにすると、switch＞circleのtop,leftはswitchからの位置になる。*/
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 116px;
+            height: 35px;
+        }
+        .Mode {
+            /*ボタン内の文字をスライドさせる*/
+            position: absolute;
+            left: 42px;
+            font: bold 20px "Yu Gothic",sans-serif;
+            letter-spacing: 1px;
+            color: #000000;
+            z-index: 10;
+            transition: 0.5s;
+            }
+
+        input:checked ~ .Mode {
+            /* activeクラスがついた時（ライトモード時） */
+            /* 修正版：inputがチェックされた時の、兄弟要素である.Modeに対して適用(~)する */
+            left: 20px;
+            color: #ffffff;
+            font: bold 20px "Yu Gothic",sans-serif;
+            letter-spacing: 1px;
+            z-index: 10;
+        }
+
+        .base {
+            /*土台。width,height=サイズ。border...角の丸*/
+            width: 116px;
+            border-radius: 21px;
+            height: 35px;
+            background-color:#ffffff;
+            box-shadow: 0 0 6px 1px   #00000070;
+        }
+
+        input:checked ~ .base {
+            /*チェックされているときの土台の色*/
+            background-color: #5c6e9c;
+            transition: 0.5s;
+            box-shadow: 0 0 6px 1px   #00000070
+        }
+
+        .circle {
+            /*スイッチの丸。width,height=サイズ。borderはサイズの半分の値。top,left＝位置。*/
+            position: absolute;
+            top: 5px;
+            left: 7px;
+            width: 24px;
+            height: 24px;
+            border-radius: 12px;
+            background-color: #373e59;
+            transition: 0.5s;
+            z-index: 5;
+        }
+
+        input:checked ~ .circle {
+            /*translateX=右に丸何個(100%=指定px)分動かすか*/
+            transform: translateX(320%);
+            background-color: #ffffff;
+        }
+
+        .logo {
+            width: 400px;
+            font: bold 24px "Yu Gothic",sans-serif;
+            margin: auto;
+        }
+    </style>
+    <style>
+        .main-content {
+            text-align: center;
+            margin: 30px 20px;
+        }
+
+        .editor-container {
+            display: flex;
+            flex-direction: row;
+            height: 100vh;
+            margin: 0 auto;
+            max-width: 80%;
+        }
+
+        .controls {
+            width: 500px;
+            height: auto;
+            box-sizing: border-box;
+        }
+
+        section {
+            margin: 20px 0;
+        }
+
+        .editor-main {
+            flex-grow: 1;        /* 残りの幅を自動で埋める */
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .year-input {
+            padding: 10px 10px 10px 30px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin: 20px 40px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .month-input {
+            padding: 10px 10px 10px 30px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin: 20px 40px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .font-input {
+            padding: 10px 80px 10px 30px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin: 20px 40px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .font-custom {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            margin: 10px 40px;
+            font-size: 20px;
+        }
+
+        .device-button {
+            background-color: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin: 10px auto;
+            width: 250px;
+            height: 40px;
+        }
+
+        .device-button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .uploadArea {
+            display: block;
+            border: 2px dashed #dad5db;
+            margin: 20px auto;
+            padding: 30px 40px;
+            border-radius: 15px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .upload-input {
+            display: none;
+            position:absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .uploadArea:hover {
+            border-color: var(--primary);
+            background: rgba(153, 122, 194, 0.05);
+        }
+
+        #wallpaper-canvas {
+        background-color: #1a1a1a; /* デフォルト背景 */
+        background-size: cover;
+        position: relative;
+        overflow: hidden;
+        margin: 0 auto;
+        }
+
+        #calendar-area {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            padding: 40px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5); /* どんな背景でも文字を読ませる執念 */
+        }
+
+        .colors-container {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-direction: row;
+            margin: 10px 40px;
+        }
+
+        .colors-button {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            border: none;
+            margin: 10px 5px;
+            cursor: pointer;
+        }
+
+        .moon-container {
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 5px 10px 20px 30px;
+            margin: 0 40px;
+        }
+
+        .moon-custom {
+            background-color: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 10px 80px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .moon-custom:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .moon-custom:checked {
+            background-color: #1a1a1a;
+        }
+
+        .pos-button {
+            background-color: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin: 10px auto;
+            width: 250px;
+            height: 40px;
+        }
+
+        .pos-button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        /* 画像に合わせ、日曜は赤、土曜は青 */
+        .sun { color: #cc3333; }
+        .sat { color: #3366cc; }
+
+        /* 前後の月の日付を薄くする */
+        .other-month { opacity: 0.4; }
+
+        /* カレンダー全体を包むコンテナ */
+        /* 修正版：カレンダー全体を包むコンテナ */
+        #calendar-area {
+            z-index: 10; /* 背景より前に出す */
+            position: absolute;
+            width: 100%;
+            /* top: 50%; transform: translateY(-50%); これで垂直中央に固定しろ */
+            top: 50%;
+            transform: translateY(-50%);
+            text-align: center;
+            padding: 0; /* paddingで余計な余白を作らん */
+            box-sizing: border-box;
+            background: transparent !important; /* 絶対に透明 */
+            /* 背景との境界を自然にするための影は最小限に */
+            text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+
+        /* 月名（Juneなど）のスタイル */
+        #month-title {
+            font-size: 2em; /* フォントサイズ可変の基準 */
+            margin-bottom: 30px;
+            letter-spacing: 0.1em;
+            text-transform: capitalize; /* 念のため先頭大文字に */
+        }
+
+        /* テーブルの構造デバッグ */
+        #cal-table {
+            width: 100%;
+            max-width: 800px; /* あまり広がりすぎると読みづらい */
+            margin: 0 auto;
+            border-collapse: separate; /* border-spacingを使うために変更 */
+            border-spacing: 0 15px;    /* 行間の余白を空ける */
+        }
+
+        #cal-table th {
+            font-weight: normal;
+            padding-bottom: 20px;
+            font-size: 1.2em;
+            color: inherit;
+        }
+
+        #cal-table td {
+            padding: 10px 5px;
+            line-height: 1.2;
+            vertical-align: middle; /* 日付と月を中央に寄せる */
+        }
+
+        /* 日付の数字 */
+        .date-num {
+            display: block;
+            font-size: 1.4em;
+            margin-bottom: 5px;
+        }
+
+        /* 月齢画像（お前が持ってるやつ） */
+        .moon-img {
+            display: block;
+            margin: 0 auto;
+            width: 32px; /* スライダー連動の初期値 */
+            height: auto;
+            /* 背景が明るくても見えるように、少しドロップシャドウを足す */
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));
+        }
+
+        /* 画面上の見た目を制御する枠 */
+        #preview-viewport {
+            width: 80%;
+            height: 80vh; /* 画面の高さの8割 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #586275;
+            border-radius: 15px;
+            margin: 20px 20px;
+            overflow: hidden; /* はみ出た分を隠す */
+            border: none;
+            overflow: visible;
+        }
+
+        /* 実際の壁紙サイズ（JSで書き換える） */
+            #wallpaper-canvas {
+                background-color: #bbbbbb;
+                background-size: cover;
+                background-position: center;
+                position: relative;
+                /* 初期値（iPhone13/14 Pro想定とか） */
+                width: 1320px;
+                height: 2868px;
+                /* ★重要：デカすぎるので、見た目だけ縮小する */
+                transform: scale(0.2);
+                transform-origin: center center;
+                flex-shrink: 0;
+                outline: 1px solid #ffffff;
+            }
+    </style>
+</head>
+<body>
+    <header>
+    <!--ダークモードのスイッチ-->
+    <!--labelのforとinputのidが一致する必要がある-->
+        <div class="mode-switch">
+            <label for="switch" class="switch_label">
+                    <div class="switch">
+                        <input type="checkbox" id="switch">
+                        <span class="Mode">dark</span>
+                        <div class="circle"></div>
+                        <div class="base"></div>
+                    </div>
+            </label>
+        </div>
+        <div class="logo"><h1>SECTOR：C-C</h1></div>
+    </header>
+<!--ここまでヘッダー-->
+<!--ここからメイン-->
+<main>
+    <div class="main-content">
+        <h1>カレンダー作成ツール</h1>
+        <p>使い方：</p>
+        <p>壁紙にしたい画像を挿入し、カレンダーをカスタマイズ<br>完成したら、右クリックで「名前を付けて画像を保存」<br>月齢も反映可能！</p>
+    </div>
+    <div class="editor-container">
+        <!--設定パネル-->
+        <aside class="controls">
+            <section>
+                <h3>デバイスサイズ</h3>
+                <button onclick="changeSize(1320, 2868)" class="device-button">スマホ</button>
+                <button onclick="changeSize(2048, 2732)" class="device-button">タブレット</button>
+            </section>
+            <section>
+                <label for="bg-upload" class="uploadArea">背景画像をアップロード
+                <input type="file" id="bg-upload" accept="image/*" class="upload-input"></label>
+            </section>
+            <section>
+                <h3>カスタム</h3>
+                <label for="year month" class="custom-container">
+                    <input type="number" id="year" value="2026" onchange="update()" class="year-input">
+                    <select id="month" onchange="update()" class="month-input">
+                        <option value="0">January</option>
+                        <option value="1">February</option>
+                        <option value="2">March</option>
+                        <option value="3">April</option>
+                        <option value="4">May</option>
+                        <option value="5">June</option>
+                        <option value="6">July</option>
+                        <option value="7">August</option>
+                        <option value="8">September</option>
+                        <option value="9">October</option>
+                        <option value="10">November</option>
+                        <option value="11">December</option>
+                    </select>
+                </label>
+            </section>
+            <section>
+                <select id="font" onchange="update()" class="font-input">
+                    <option value="'Yu Mincho', serif">游明朝</option>
+                    <option value="'Yu Gothic', sans-serif">游ゴシック</option>
+                    <option value="'Meiryo', sans-serif">メイリオ</option>
+                    <option value="'Playfair Display', serif">Playfair Display</option>
+                    <option value="'Noto Serif JP', serif">源ノ明朝 / Noto Serif</option>
+                    <option value="'Montserrat', sans-serif">Montserrat</option>
+                </select>
+                <div class="font-custom">
+                    <span>フォントサイズ：</span>
+                    <input type="range" id="size-slider" min="30" max="60" value="40" oninput="update()">
+                </div>
+                <div class="colors-container">
+                    <input type="color" id="color" value="#ffffff" onchange="update()" class="colors-button">
+                    <div class="colors-row">
+                        <button class="colors-button" style="background-color:#ffffff" onclick="applyQuickColor('#ffffff')"></button>
+                        <button class="colors-button" style="background-color:#000000" onclick="applyQuickColor('#000000')"></button>
+                        <button class="colors-button" style="background-color:#bbbbbb" onclick="applyQuickColor('#bbbbbb')"></button>
+                        <button class="colors-button" style="background-color:#586275" onclick="applyQuickColor('#586275')"></button>
+                    </div>
+                </div>
+            </section>
+            <section>
+                <div class="moon-container">
+                    <h3>月齢オプション</h3>
+                    <label class="moon-custom">
+                        <input type="checkbox" id="show-moon" checked onchange="update()">月齢の表示
+                    </label>
+                    <div style="margin: 10px 20px;">
+                        <span style="font-size: 20px; margin: auto;">サイズ:</span>
+                        <input type="range" id="moon-size" min="10" max="60" value="32" oninput="update()">
+                    </div>
+                </div>
+            </section>
+            <section>
+                <h3>位置</h3>
+                <div class="pos-control">
+                    <button onclick="setPos('top')" class="pos-button">Top</button>
+                    <button onclick="setPos('center')" class="pos-button">Center</button>
+                    <button onclick="setPos('bottom')" class="pos-button">Bottom</button>
+                </div>
+            </section>
+            <section>
+                <h3>書き出し</h3>
+                <button onclick="saveWallpaper()" class="device-button" style="background-color: #c0c3d7; color: #000000; font-size: large;">画像を保存する</button>
+            </section>
+        </aside>
+        <!--プレビューエリア-->
+        <div class="editor-main">
+            <div id="preview-viewport">
+                <div id="wallpaper-canvas">
+                    <div id="calendar-area" class="pos-bottom">
+                        <div id="month-title">
+                            <span id="year-num" style="font-size: 0.5em; display: block; opacity: 0.8;">2026</span>
+                            <span id="month-name">june</span>
+                        </div>
+                        <table id="cal-table">
+                            <thead>
+                                <tr>
+                                    <th class="sun">Su.</th>
+                                    <th>Mo.</th>
+                                    <th>Tu.</th>
+                                    <th>We.</th>
+                                    <th>Th.</th>
+                                    <th>Fr.</th>
+                                    <th class="sat">Sa.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cal-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+    <canvas id="wallpaper-canvas"></canvas>
+    <script>
+        // 1. 画像挿入の処理（FileReader）
+        // 2. カレンダー描画のロジック
+        // 3. 保存ボタンのクリックイベント
+        console.log("論理的整合性、ヨシ！");
+    </script>
+</body>
+<script>
+const checkbox = document.getElementById('switch');
+const body = document.body;
+const title = document.querySelector(".Mode");
+
+// 初期化：HTMLでbodyにdark/lightがついてなかった時の保険
+if (!body.classList.contains('dark') && !body.classList.contains('light')) {
+    body.classList.add('dark');
+}
+
+checkbox.addEventListener("change", () => {
+    // 1. 文字の書き換え
+    title.textContent = checkbox.checked ? "light" : "dark";
+
+    // 2. クラスの入れ替え（これなら他のクラスに影響しない）
+    if (checkbox.checked) {
+            body.classList.replace('dark', 'light');
+    } else {
+            body.classList.replace('light', 'dark');
+    }
+});
+</script>
+<script>
+    // グローバル変数
+    const canvas = document.getElementById('wallpaper-canvas');
+    const viewport = document.getElementById('preview-viewport');
+    const bgUpload = document.getElementById('bg-upload');
+
+    // 1. 画像読み込み
+    bgUpload.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            canvas.style.backgroundImage = `url('${event.target.result}')`;
+            fitToScreen();
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // 2. カレンダー更新ロジック
+    function update() {
+        const year = parseInt(document.getElementById('year').value);
+        const month = parseInt(document.getElementById('month').value);
+        const calBody = document.getElementById('cal-body');
+        const color = document.getElementById('color').value;
+        const fontSize = document.getElementById('size-slider').value;
+        const font = document.getElementById('font').value;
+
+        // 追加：月齢表示の有無とサイズ
+        const showMoon = document.getElementById('show-moon')?.checked ?? true;
+        const moonSize = document.getElementById('moon-size')?.value ?? 32;
+
+        // スタイル反映
+        const area = document.getElementById('calendar-area');
+        area.style.color = color;
+        area.style.fontFamily = font;
+        area.style.fontSize = fontSize + "px";
+
+        // タイトル更新
+        document.getElementById('year-num').textContent = year;
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        document.getElementById('month-name').textContent = monthNames[month];
+
+        // カレンダー計算
+        const firstDay = new Date(year, month, 1).getDay();
+        const lastDate = new Date(year, month + 1, 0).getDate();
+        const prevLastDate = new Date(year, month, 0).getDate();
+
+        let html = "";
+        let dateCount = 1 - firstDay;
+
+        for (let i = 0; i < 6; i++) {
+            html += "<tr>";
+            for (let j = 0; j < 7; j++) {
+                let displayDate, className = "";
+                let targetDate; // 月齢計算用の正確な日付オブジェクト
+
+                if (dateCount < 1) {
+                    displayDate = prevLastDate + dateCount;
+                    className = "other-month";
+                    targetDate = new Date(year, month - 1, displayDate);
+                } else if (dateCount > lastDate) {
+                    displayDate = dateCount - lastDate;
+                    className = "other-month";
+                    targetDate = new Date(year, month + 1, displayDate);
+                } else {
+                    displayDate = dateCount;
+                    targetDate = new Date(year, month, displayDate);
+                    if (j === 0) className = "sun";
+                    if (j === 6) className = "sat";
+                }
+
+                // 月齢タグの生成
+                let moonTag = "";
+                if (showMoon) {
+                    // 簡易月齢計算（2000年1月6日の新月を基準とした近似値）
+                    const baseDate = new Date(2000, 0, 6);
+                    const diffDays = (targetDate - baseDate) / (1000 * 60 * 60 * 24);
+                    const moonAge = diffDays % 29.53059;
+                    const moonIndex = Math.floor(moonAge % 30); // 0-29の範囲に収める
+
+                    // 画像が表示されない対策：パスが正しいか、コンソールで確認しろ
+                    // Moon_0.png から Moon_29.png がフォルダにある前提やぞ
+                    moonTag = `<img src="moon/Moon_${moonIndex}.png" class="moon-img" style="width:${moonSize}px;" onerror="console.error('Image not found: Moon_${moonIndex}.png')">`;
+                }
+
+                html += `<td class="${className}"><span class="date-num">${displayDate}</span>${moonTag}</td>`;
+                dateCount++;
+            }
+            html += "</tr>";
+            if (dateCount > lastDate && i >= 4) break;
+        }
+        calBody.innerHTML = html;
+    }
+
+    // 3. サイズ変更とスケーリング
+    function changeSize(w, h) {
+        canvas.style.width = w + "px";
+        canvas.style.height = h + "px";
+        fitToScreen();
+    }
+
+    function fitToScreen() {
+        const w = canvas.offsetWidth;
+        const h = canvas.offsetHeight;
+        const vW = viewport.clientWidth;
+        const vH = viewport.clientHeight;
+        if (!w || !h) return;
+        const scale = Math.min(vW / w, vH / h) * 0.9;
+        canvas.style.transform = `scale(${scale})`;
+    }
+
+    // 4. 配置切り替え
+    function setPos(pos) {
+        const area = document.getElementById('calendar-area');
+        area.classList.remove('pos-top', 'pos-center', 'pos-bottom');
+        area.classList.add(`pos-${pos}`);
+        if(pos === 'top') { area.style.top = "10%"; area.style.bottom = "auto"; area.style.transform = "none"; }
+        if(pos === 'center') { area.style.top = "50%"; area.style.transform = "translateY(-50%)"; }
+        if(pos === 'bottom') { area.style.top = "auto"; area.style.bottom = "10%"; area.style.transform = "none"; }
+    }
+
+    window.onload = () => { update(); fitToScreen(); };
+    window.onresize = fitToScreen;
+
+    function applyQuickColor(hex) {
+        const colorPicker = document.getElementById('color');
+        colorPicker.value = hex; // カラーピッカーの値を更新
+        update(); // カレンダーを再描画
+    }
+</script>
+<script>
+    // もしこういう処理があるなら、backgroundColorを明示的にnullにする
+        html2canvas(document.querySelector("#wallpaper-canvas"), {
+            backgroundColor: null,
+            // ...他のオプション
+        }).then(canvas => {
+            // 保存処理
+        });
+    async function saveWallpaper() {
+        const canvasElement = document.getElementById('wallpaper-canvas');
+        const saveBtn = event.target;
+
+        // 二重クリック防止
+        saveBtn.innerText = "生成中...";
+        saveBtn.disabled = true;
+
+        // 1. スケーリングを一時解除（これをせんとボケボケになる）
+        const originalTransform = canvasElement.style.transform;
+        canvasElement.style.transform = 'none';
+
+        try {
+            // 2. html2canvasでキャプチャ
+            const canvas = await html2canvas(canvasElement, {
+                useCORS: true, // 画像の外部読み込み対策
+                scale: 1,      // 元のサイズで書き出し
+                logging: false,
+            });
+
+            // 3. ダウンロード処理
+            const link = document.createElement('a');
+            const year = document.getElementById('year').value;
+            const month = document.getElementById('month').value;
+            link.download = `Wallpaper_${year}_${parseInt(month)+1}.png`;
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+        } catch (err) {
+            console.error("生成に失敗したわ：", err);
+            alert("画像の生成に失敗したぞ。コンソールを見ろ。");
+        } finally {
+            // 4. スケーリングを戻す
+            canvasElement.style.transform = originalTransform;
+            saveBtn.innerText = "画像を保存する";
+            saveBtn.disabled = false;
+        }
+    }
+</script>
+</html>
